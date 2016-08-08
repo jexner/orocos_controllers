@@ -58,6 +58,9 @@ InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
   this->ports()->addPort("JointPosition",
                          port_internal_space_position_measurement_);
 
+  this->ports()->addPort("JointPositionDelta",
+                         port_internal_space_position_delta_);
+
   this->addProperty("number_of_joints", number_of_joints_);
 
   return;
@@ -115,6 +118,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     trajectory_active_ = true;
   }
 
+  port_internal_space_position_delta_.read(joint_state_deltas);
  
   ros::Time now = rtt_rosclock::host_now();
   if (trajectory_active_ && trajectory_ && (trajectory_->header.stamp < now)) {
@@ -130,7 +134,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
                 && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
               vel_profile_[i].SetProfileDuration(
                 old_point_(i), 0.0, 0.0,
-                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].accelerations[i],
                 trajectory_->points[trajectory_ptr_].time_from_start.toSec());
@@ -139,14 +143,14 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
               // if pos and velocity given
               vel_profile_[i].SetProfileDuration(
                 old_point_(i), 0.0,
-                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             } else {
               // if only pos is given
               vel_profile_[i].SetProfileDuration(
                 old_point_(i),
-                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
                 trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             }
           } else { // all other points
@@ -159,7 +163,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
                 trajectory_->points[trajectory_ptr_ - 1].positions[i],
                 trajectory_->points[trajectory_ptr_ - 1].velocities[i],
                 trajectory_->points[trajectory_ptr_ - 1].accelerations[i],
-                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].accelerations[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start
@@ -172,7 +176,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
               vel_profile_[i].SetProfileDuration(
                 trajectory_->points[trajectory_ptr_ - 1].positions[i],
                 trajectory_->points[trajectory_ptr_ - 1].velocities[i],
-                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start
                  - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
@@ -181,7 +185,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
               // if only pos is given
               vel_profile_[i].SetProfileDuration(
                 trajectory_->points[trajectory_ptr_ - 1].positions[i],
-                trajectory_->points[trajectory_ptr_].positions[i],
+                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start
                  - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
                 .toSec());
@@ -226,6 +230,9 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     }
   }
   
+  sensor_msgs::JointState joint_state_actual_;
+  joint_state_actual_.position = setpoint_;
+  port_internal_space_position_.write(joint_state_actual_);
   port_internal_space_position_command_.write(setpoint_);
   port_internal_space_posvel_command_.write(setpoint_posvel_);
 }

@@ -53,6 +53,8 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/JointTrajectoryPoint.h>
 
+#include <sensor_msgs/JointState.h>
+
 class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
  public:
   explicit InternalSpaceSplineTrajectoryGenerator(const std::string& name);
@@ -67,8 +69,10 @@ class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
 
   RTT::OutputPort<Eigen::VectorXd > port_internal_space_position_command_;
   RTT::OutputPort<trajectory_msgs::JointTrajectoryPoint> port_internal_space_posvel_command_;
+  RTT::InputPort<sensor_msgs::JointState> port_internal_space_position_;
   
   RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
+  RTT::InputPort<sensor_msgs::JointState> port_internal_space_position_delta_;
 
  private:
   bool last_point_not_set_;
@@ -80,6 +84,8 @@ class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
 
   Eigen::VectorXd des_jnt_pos_, setpoint_, old_point_;
   trajectory_msgs::JointTrajectoryPoint setpoint_posvel_;
+
+  sensor_msgs::JointState joint_state_deltas;
 
   trajectory_msgs::JointTrajectoryConstPtr trajectory_;
   size_t trajectory_ptr_;
