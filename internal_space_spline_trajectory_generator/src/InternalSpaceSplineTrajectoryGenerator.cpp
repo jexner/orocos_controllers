@@ -230,9 +230,9 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     }
   }
   
-  sensor_msgs::JointState joint_state_actual_;
-  joint_state_actual_.position = setpoint_;
-  port_internal_space_position_.write(joint_state_actual_);
+  //sensor_msgs::JointState joint_state_actual_;
+  //joint_state_actual_.position.assign((size_t)setpoint_.cols() * setpoint_.rows(), setpoint_.data());
+  //port_internal_space_position_.write(joint_state_actual_);
   port_internal_space_position_command_.write(setpoint_);
   port_internal_space_posvel_command_.write(setpoint_posvel_);
 }

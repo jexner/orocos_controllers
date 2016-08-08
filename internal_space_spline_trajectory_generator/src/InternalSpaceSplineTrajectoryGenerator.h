@@ -69,7 +69,7 @@ class InternalSpaceSplineTrajectoryGenerator : public RTT::TaskContext {
 
   RTT::OutputPort<Eigen::VectorXd > port_internal_space_position_command_;
   RTT::OutputPort<trajectory_msgs::JointTrajectoryPoint> port_internal_space_posvel_command_;
-  RTT::InputPort<sensor_msgs::JointState> port_internal_space_position_;
+  RTT::OutputPort<sensor_msgs::JointState> port_internal_space_position_;
   
   RTT::InputPort<Eigen::VectorXd > port_internal_space_position_measurement_;
   RTT::InputPort<sensor_msgs::JointState> port_internal_space_position_delta_;
