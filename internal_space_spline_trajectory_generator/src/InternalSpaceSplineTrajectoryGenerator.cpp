@@ -60,6 +60,7 @@ InternalSpaceSplineTrajectoryGenerator::InternalSpaceSplineTrajectoryGenerator(
 
   this->ports()->addPort("JointPositionDelta",
                          port_internal_space_position_delta_);
+  RTT::Logger::log(RTT::Logger::Debug) << "#############DELTA################" << RTT::endlog();
 
   this->addProperty("number_of_joints", number_of_joints_);
 
@@ -118,9 +119,25 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     trajectory_active_ = true;
   }
 
-  port_internal_space_position_delta_.read(joint_state_deltas);
+  // check for new joint state deltas for collision avoidance
+  sensor_msgs::JointState joint_state_deltas_tmp;
+  if (port_internal_space_position_delta_.read(joint_state_deltas_tmp) == RTT::NewData) {
+    RTT::Logger::log(RTT::Logger::Debug) << "############# received new deltas: " << joint_state_deltas_tmp << RTT::endlog();
+    joint_state_deltas = joint_state_deltas_tmp;
+  }
+
+  // make sure we have enough entries and fill up missing with zeros
+  if (joint_state_deltas.position.size() != number_of_joints_) {
+    joint_state_deltas.position.resize(number_of_joints_, 0);
+  }
  
   ros::Time now = rtt_rosclock::host_now();
+
+  if (now - joint_state_deltas.header.stamp > ros::Duration(1.0)) {
+    RTT::Logger::log(RTT::Logger::Debug) << "############# discarding old deltas" << RTT::endlog();
+    std::fill(joint_state_deltas.position.begin(), joint_state_deltas.position.end(), 0);
+  }
+
   if (trajectory_active_ && trajectory_ && (trajectory_->header.stamp < now)) {
     for (; trajectory_ptr_ < trajectory_->points.size(); trajectory_ptr_++) {
       ros::Time trj_time = trajectory_->header.stamp
