@@ -134,7 +134,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
                 && trajectory_->points[trajectory_ptr_].velocities.size() > 0) {
               vel_profile_[i].SetProfileDuration(
                 old_point_(i), 0.0, 0.0,
-                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].accelerations[i],
                 trajectory_->points[trajectory_ptr_].time_from_start.toSec());
@@ -143,14 +143,14 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
               // if pos and velocity given
               vel_profile_[i].SetProfileDuration(
                 old_point_(i), 0.0,
-                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             } else {
               // if only pos is given
               vel_profile_[i].SetProfileDuration(
                 old_point_(i),
-                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
                 trajectory_->points[trajectory_ptr_].time_from_start.toSec());
             }
           } else { // all other points
@@ -163,7 +163,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
                 trajectory_->points[trajectory_ptr_ - 1].positions[i],
                 trajectory_->points[trajectory_ptr_ - 1].velocities[i],
                 trajectory_->points[trajectory_ptr_ - 1].accelerations[i],
-                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 trajectory_->points[trajectory_ptr_].accelerations[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start
@@ -176,7 +176,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
               vel_profile_[i].SetProfileDuration(
                 trajectory_->points[trajectory_ptr_ - 1].positions[i],
                 trajectory_->points[trajectory_ptr_ - 1].velocities[i],
-                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
                 trajectory_->points[trajectory_ptr_].velocities[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start
                  - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
@@ -185,7 +185,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
               // if only pos is given
               vel_profile_[i].SetProfileDuration(
                 trajectory_->points[trajectory_ptr_ - 1].positions[i],
-                trajectory_->points[trajectory_ptr_].positions[i] + joint_state_deltas.position[i],
+                trajectory_->points[trajectory_ptr_].positions[i],
                 (trajectory_->points[trajectory_ptr_].time_from_start
                  - trajectory_->points[trajectory_ptr_ - 1].time_from_start)
                 .toSec());
@@ -206,7 +206,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
       }
 
       for (unsigned int i = 0; i < number_of_joints_; i++) {
-        setpoint_(i) = vel_profile_[i].Pos(t);
+        setpoint_(i) = vel_profile_[i].Pos(t) + joint_state_deltas.position[i];
         
         setpoint_posvel_.positions[i] = setpoint_(i);
         setpoint_posvel_.velocities[i] = vel_profile_[i].Vel(t);
@@ -217,7 +217,7 @@ void InternalSpaceSplineTrajectoryGenerator::updateHook() {
     } else if (last_point_not_set_) {
       for (unsigned int i = 0; i < number_of_joints_; i++) {
         setpoint_(i) = trajectory_->points[trajectory_->points.size() - 1]
-                       .positions[i];
+                       .positions[i] + joint_state_deltas.position[i];
         setpoint_posvel_.positions[i] = setpoint_(i);
         if( trajectory_->points[trajectory_->points.size() - 1].velocities.size() > 0 ) 
         {
